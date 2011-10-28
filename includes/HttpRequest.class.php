@@ -3,9 +3,14 @@
 class HttpRequest {
 	protected $cachePath = 'cache';
 	protected $server = array();
+	protected $time = 0;
 
 	public function __construct($server) {
+		if(!array_key_exists('REQUEST_URI', $server))
+			throw new \InvalidArgumentException('Missing key `REQUEST_URI` in $server.');
+
 		$this->server = $server;
+		$this->time = empty($server['REQUEST_TIME']) ? time() : $server['REQUEST_TIME'];
 	}
 
 	public function getHeaders() {
@@ -60,14 +65,16 @@ class HttpRequest {
 	}
 
 	public function writeToFile() {
-		$contents = json_encode(array(
+		$contents = array(
+			'time'		=> date('c', $this->time),
 			'path'		=> $this->getPath(),
 			'query'		=> $this->getQuery(),
 			'headers'	=> $this->getHeaders(),
 			'input'		=> $this->getInput(),
-		));
+		);
 
-		file_put_contents($this->getFileName().'_'.time(), $contents);
+		$filename = sprintf('%s_%u', $this->getFileName(), $this->time);
+		file_put_contents($filename, json_encode($contents));
 		return $contents;
 	}
 }
