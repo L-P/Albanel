@@ -32,6 +32,11 @@ class HttpRequest {
 		return $headers;
 	}
 
+
+	public function getHost() {
+		return $this->server['HTTP_HOST'];
+	}
+
 	public function getPath() {
 		list($path) = explode('?', $this->server['REQUEST_URI']);
 		return $path;
@@ -44,7 +49,15 @@ class HttpRequest {
 	}
 
 	public function getInput() {
-		return bin2hex(file_get_contents('php://input'));
+		static $input = null;
+		static $inputSet = false;
+
+		if(!$inputSet) {
+			$input = file_get_contents('php://input');
+			$inputSet = true;
+		}
+
+		return $input;
 	}
 
 
@@ -67,15 +80,41 @@ class HttpRequest {
 	public function writeToFile() {
 		$contents = array(
 			'time'		=> date('c', $this->time),
+			'host'		=> $this->getHost(),
 			'path'		=> $this->getPath(),
 			'query'		=> $this->getQuery(),
 			'headers'	=> $this->getHeaders(),
-			'input'		=> $this->getInput(),
+			'input'		=> bin2hex($this->getInput()),
 		);
 
 		$filename = sprintf('%s_%u', $this->getFileName(), $this->time);
 		file_put_contents($filename, json_encode($contents));
 		return $contents;
 	}
+
+
+	public function replay() {
+		$headers = '';
+		foreach($this->getHeaders() as $k => $v)
+			$headers .= "$k: $v\r\n";
+
+		$method = $this->getMethod();
+		$options = array(
+			'headers'	=> $headers,
+			'method'	=> $method,
+		);
+
+		if(in_array($method, array('PUT', 'POST')))
+			$options['content'] = $this->getInput();
+
+		$context = stream_context_create(array('http' => $options));
+		print_r($options);
+	}
+
+
+	public function getMethod() {
+		return strlen($this->getInput()) ? 'POST' : 'GET';
+	}
+
 }
 

@@ -8,6 +8,5 @@ function __autoload($class) {
 $request = new HttpRequest($_SERVER);
 header('Content-type: text/plain');
 print_r($request->writeToFile());
-print_r($_SERVER);
-
+$request->replay();
 
