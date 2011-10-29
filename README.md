@@ -30,8 +30,8 @@ routing the request to the actual host.
 
 Here is a lighttpd configuration snippet that may prove useful :
 
-    $HTTP["host"] =~ "fake" { 
-       server.document-root = "/var/www/albanel" 
+    $HTTP["host"] =~ "fake" {
+       server.document-root = "/var/www/albanel"
        url.rewrite = (
           "^(.*)$" => "index.php"
        )
